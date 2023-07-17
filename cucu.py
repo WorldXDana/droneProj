@@ -1,19 +1,31 @@
 import csv
 import re
-import pysrt
+import pysubs2
 
-def srt_to_text(srt_file):
-    subs = pysrt.open(srt_file)
-    text = ""
-    for sub in subs:
-        text += sub.text_without_tags + " "
-    return text.strip()
+def extract_info(subtitles):
+    headers = ["Timestamp", "SS", "ISO", "EV", "DZOOM", "GPS_LON [°]", "GPS_LAT [°]", "GPS_ALT", "D [m]", "H [m]", "H.S [m/s]", "V.S [m/s]"]
+    values = []
 
-def extract_info(text):
-    headers = ["SS", "ISO", "EV", "DZOOM", "GPS", "D", "H", "H.S", "V.S"]
-    pattern = r"SS (\d+\.\d+), ISO (\d+), EV ([+-]?\d+\.\d+), DZOOM (\d+\.\d+), GPS \(([^)]+)\), D ([^m]+)m, H ([^m]+)m, H.S ([^m/s]+)m/s, V.S ([^m/s]+)m/s"
-    matches = re.findall(pattern, text)
-    values = [list(match) for match in matches]
+    for subtitle in subtitles:
+        text = subtitle.text
+
+        timestamp = subtitle.start
+        ss = re.search(r"SS (\d+\.\d+)", text).group(1)
+        iso = re.search(r"ISO (\d+)", text).group(1)
+        ev = re.search(r"EV ([+-]?\d+\.\d+)", text).group(1)
+        dzoom = re.search(r"DZOOM (\d+\.\d+)", text).group(1)
+        gps = re.search(r"GPS \(([^)]+)\)", text).group(1).split(", ")
+        gps_lon = gps[0]
+        gps_lat = gps[1]
+        gps_alt = gps[2]
+        d = re.search(r"D ([^m]+)", text).group(1)
+        h = re.search(r"H ([^m]+)", text).group(1)
+        hs = re.search(r"H.S ([^m/s]+)", text).group(1)
+        vs = re.search(r"V.S ([^m/s]+)", text).group(1)
+
+        row = [str(timestamp), ss, iso, ev, dzoom, gps_lon, gps_lat, gps_alt, d, h, hs, vs]
+        values.append(row)
+
     return headers, values
 
 def write_csv(headers, values, csv_file):
@@ -26,13 +38,14 @@ def write_text(text, txt_file):
     with open(txt_file, 'w') as file:
         file.write(text)
 
-srt_file = "flight3.srt"
-csv_file = "subtitle3.csv"
-txt_file = "info3.txt"
+srt_file = "subtitles.srt"
+csv_file = "subtitles.csv"
+txt_file = "info.txt"
 
-text = srt_to_text(srt_file)
-headers, values = extract_info(text)
+subtitles = pysubs2.load(srt_file)
+text = "\n".join([subtitle.text for subtitle in subtitles])
 
+headers, values = extract_info(subtitles)
 write_csv(headers, values, csv_file)
 write_text(text, txt_file)
 
