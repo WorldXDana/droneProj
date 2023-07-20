@@ -162,3 +162,4 @@ cython_debug/
 #files and videos
 *.txt
 *.mp4
+try.py
