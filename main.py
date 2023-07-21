@@ -2,7 +2,10 @@ from dataHandler import extract_info, write_csv
 import pysubs2
 
 def main():
-    srt_file = input("please enter the .srt file: ")
+    try:
+         srt_file = input("please enter the .srt file: ")
+    except Exception as e:
+        print("no file with that name in directory")
     subtitles = pysubs2.load(srt_file)
 
     headers, full_values, na_values, clean_values = extract_info(subtitles)
